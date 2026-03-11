@@ -19,6 +19,7 @@ Ogólna struktura apki:
 - Backend -  Spring Boot
 - OCR - Tess4J lub inny wybrany w toku wykonywania projektu
 - Baza danych - PostgreSQL
+
 Dalej opcjonalnie:
 - Spakowanie całości w kontener Docker
 - Deploy na Railway i działa to jako normalna strona internetowa
