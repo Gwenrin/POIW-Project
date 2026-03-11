@@ -23,7 +23,7 @@ Dalej opcjonalnie:
 - Deploy na Railway i działa to jako normalna strona internetowa
 
 Podział obowiązków:
-Mateusz Miłowidow (Gwenrin) - Team leader, backend, OCR, baza danych, Git
-Szymon Maćkowiak (OryginalnaNazwa) - backend, OCR, baza danych
-Adam Krawczyński (Indien-ak) - Frontend, dokumentacja
-Jakub Masalski (MadmanJacob) - frontend, dokumentacja
+- Mateusz Miłowidow (Gwenrin) - Team leader, backend, OCR, baza danych, Git
+- Szymon Maćkowiak (OryginalnaNazwa) - backend, OCR, baza danych
+- Adam Krawczyński (Indien-ak) - Frontend, dokumentacja
+- Jakub Masalski (MadmanJacob) - frontend, dokumentacja
