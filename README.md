@@ -22,7 +22,7 @@ Ogólna struktura apki:
 
 Dalej opcjonalnie:
 - Spakowanie całości w kontener Docker
-- Deploy na Railway i działa to jako normalna strona internetowa
+- Deploy za pomocą Railway
 
 Podział obowiązków:
 - Mateusz Miłowidow (Gwenrin) - Team leader, backend, OCR, baza danych, Git
