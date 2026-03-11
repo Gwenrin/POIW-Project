@@ -2,8 +2,9 @@
 Projekt na zajęcia programowanie obiektowe i wieloplatformowe.
 
 Aplikacja webowa OCR - rozpoznawanie tekstu z obrazu.
+
 Funkcjonalności minimalne, czyli kiedy uznajemy projekt ze zrealizowany: 
-Po uploadzie obrazu i kliknięciu przycisku pojawia się tekst, można go zaznaczyć, edytować, skopiować itd.
+- Po uploadzie obrazu i kliknięciu przycisku pojawia się tekst, można go zaznaczyć, edytować, skopiować itd.
 
 Funkcje, które chcielibyśmy wprowadzić, ale są opcjonalne:
 - logowanie się użytkownika
@@ -14,10 +15,10 @@ Funkcje, które chcielibyśmy wprowadzić, ale są opcjonalne:
 - obsługa zdjęć i pisma odręcznego.
 
 Ogólna struktura apki:
-- Frontend - Thymeleaf albo jak się zgodzi to Angular
+- Frontend - Thymeleaf lub Angular
 - Backend -  Spring Boot
-- OCR - Tess4J albo inny, który będzie fajnie działać w javie lub w pythonie jeśli będzie można
-- Baza danych - PostgreSQL bo MySQL trochę cringe i wiocha
+- OCR - Tess4J lub inny wybrany w toku wykonywania projektu
+- Baza danych - PostgreSQL
 Dalej opcjonalnie:
 - Spakowanie całości w kontener Docker
 - Deploy na Railway i działa to jako normalna strona internetowa
