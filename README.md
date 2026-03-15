@@ -14,8 +14,8 @@ Funkcje, które chcielibyśmy wprowadzić, ale są opcjonalne:
 - obsługa polskich znaków
 - obsługa zdjęć i pisma odręcznego.
 
-Ogólna struktura apki:
-- Frontend - Thymeleaf lub Angular
+Ogólna struktura aplikacji:
+- Frontend - Angular
 - Backend -  Spring Boot
 - OCR - Tess4J lub inny wybrany w toku wykonywania projektu
 - Baza danych - PostgreSQL
