@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>POIW-Project</title>
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar__container">
+            <a href="#" class="navbar__main">OCR</a>
+            <nav class="navbar__nav" id="main-nav">
+                <ul class="nav-list">
+                    <li><a href="#" class="nav-link">
+                        Home
+                    </a></li>
+                    <li><a href="#" class="nav-link">
+                        History of files
+                    </a></li>
+                    <li><a href="#" class="nav-link">
+                        About the project
+                    </a></li>
+                    <li><a href="#" class="nav-link">
+                        License
+                    </a></li>
+                    <li><a href="#" class="nav-link">
+                        Log in
+                    </a></li>
+                </ul>
+            </nav>
+            <button class="navbar__mobile-toggle" id="mobile-toggle" aria-label="Open Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="mobile-menu-pane" id="mobile-menu-pane"></div>
+    <main class="content"><h1>WIP</h1></main>
+<script> //wstępny skrypt do obsługi na urządzeniach mobilnych
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenuPane = document.getElementById('mobile-menu-pane');
+        const mainNav = document.getElementById('main-nav');
+        if(mainNav) {
+            mobileMenuPane.innerHTML = mainNav.innerHTML;
+        }
+        if(mobileToggle) {
+            mobileToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileMenuPane.classList.toggle('is-open');
+            });
+        }
+    });
+    </script>
+</body>
+</html>
