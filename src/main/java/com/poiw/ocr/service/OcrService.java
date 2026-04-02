@@ -1,15 +1,27 @@
 package com.poiw.ocr.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class OcrService
 {
+    // getting a datapath value from properties file
+    @Value("${tesseract.datapath}")
+    private String tesseractDataPath;
+    // getting a language value from properties file
+    @Value("${tesseract.language}")
+    private String tesseractLanguage;
+
     // This method cheks if sent file is an image, is empty or returns success
     public String handleFile(MultipartFile file)
     {
+        if (file == null)
+        {
+            // handling no file sent
+            return "Error: No file was sent";
+        }
         // handling empty file
         if (file.isEmpty())
         {
@@ -30,19 +42,11 @@ public class OcrService
                 + ", size: " + file.getSize();
     }
 
-    // getting a datapath value from properties file
-    @Value("${tesseract.datapath}")
-    private String tesseractDataPath;
-
-    // getting a language value from properties file
-    @Value("${tesseract.language}")
-    private String tesseractLanguage;
-
     // check if tesseract datapath is set and if so return path and used language
     public String process()
     {
         // test if tesseract datapath is set in environment variables
-        if(tesseractDataPath == null || tesseractDataPath.isEmpty())
+        if (tesseractDataPath == null || tesseractDataPath.isEmpty())
         {
             return "Error: Tesseract Data Path is empty";
         }
