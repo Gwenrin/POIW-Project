@@ -1,57 +1,40 @@
 package com.poiw.ocr.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.poiw.ocr.model.OcrEngine;
+import com.poiw.ocr.model.OcrEngineType;
+import com.poiw.ocr.model.OcrResult;
+import com.poiw.ocr.repository.PredictionResultRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.poiw.ocr.service.FileValidationUtil.validateFile;
 
 @Service
 public class OcrService
 {
-    // getting a datapath value from properties file
-    @Value("${tesseract.datapath}")
-    private String tesseractDataPath;
-    // getting a language value from properties file
-    @Value("${tesseract.language}")
-    private String tesseractLanguage;
+    private final Map<OcrEngineType, OcrEngine> engines;
+    private final PredictionResultRepository predictionResultRepository;
 
-    // This method cheks if sent file is an image, is empty or returns success
-    public String handleFile(MultipartFile file)
+    public OcrService(List<OcrEngine> engineList, PredictionResultRepository predictionResultRepository)
     {
-        if (file == null)
-        {
-            // handling no file sent
-            return "Error: No file was sent";
-        }
-        // handling empty file
-        if (file.isEmpty())
-        {
-            return "Error: File is empty";
-        }
-
-        String contentType = file.getContentType();
-
-        // handling file type exception
-        if (contentType == null || !contentType.startsWith("image/"))
-        {
-            return "Error: File is not image";
-        }
-
-        // the return type is String and contains: name + type + size
-        return "File uploaded successfully: " + file.getOriginalFilename()
-                + ", type: " + contentType
-                + ", size: " + file.getSize();
+        this.engines = engineList.stream()
+                .collect(Collectors.toMap(OcrEngine::getType, engine -> engine));
+        this.predictionResultRepository = predictionResultRepository;
     }
 
-    // check if tesseract datapath is set and if so return path and used language
-    public String process()
+
+    public OcrResult recognize(MultipartFile file, OcrEngineType ocrEngineType)
     {
-        // test if tesseract datapath is set in environment variables
-        if (tesseractDataPath == null || tesseractDataPath.isEmpty())
+        validateFile(file);
+        OcrEngine ocrEngine = engines.get(ocrEngineType);
+        if(ocrEngine == null)
         {
-            return "Error: Tesseract Data Path is empty";
+            throw new IllegalArgumentException("Invalid engine type: " + ocrEngineType);
         }
-        // returning datapath and language
-        return "Datapath: " + tesseractDataPath
-                + ", Language: " + tesseractLanguage;
+        return ocrEngine.recognize(file);
     }
 }
