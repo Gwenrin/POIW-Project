@@ -39,9 +39,7 @@
         .mobile-menu-pane ul { margin-top: 4rem; }
         .mobile-menu-pane .nav-link { display: block; font-size: 1.2rem; padding: 1rem 0; }
 
-        .animated-border-svg {
-            display: none;
-        }
+     
 
  
         @media (min-width: 576px) {
@@ -56,3 +54,18 @@
             }
             
         }
+
+        /*styl dla about */
+
+        .about-ul { 
+            list-style-type: disc;
+         }
+
+         .about-main {
+            padding-left: 2rem; 
+            padding-right: 1rem;
+            text-align: left; 
+            text-wrap: wrap;
+            color: #fff; 
+            padding-top: calc(var(--navbar-height));
+         }
