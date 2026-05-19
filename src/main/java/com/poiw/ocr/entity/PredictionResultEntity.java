@@ -1,5 +1,7 @@
 package com.poiw.ocr.entity;
 
+import com.poiw.ocr.model.OcrEngine;
+import com.poiw.ocr.model.OcrEngineType;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
@@ -14,8 +16,9 @@ public class PredictionResultEntity
     @Column(name = "image_id", nullable = false)
     private Long imageId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "engine", nullable = false)
-    private String engine;
+    private OcrEngineType engine;
 
     @Column(name = "recognized_text", nullable = false)
     private String recognizedText;
@@ -38,11 +41,11 @@ public class PredictionResultEntity
         this.imageId = imageId;
     }
 
-    public String getEngine() {
+    public OcrEngineType getEngine() {
         return engine;
     }
 
-    public void setEngine(String engine) {
+    public void setEngine(OcrEngineType engine) {
         this.engine = engine;
     }
 

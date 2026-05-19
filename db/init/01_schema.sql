@@ -1,5 +1,5 @@
 DROP TYPE IF EXISTS ocr_engine;
-CREATE TYPE ocr_engine AS ENUM ('NEURAL', 'TESS4J');
+CREATE TYPE ocr_engine AS ENUM ('CUSTOM_NN', 'TESS4J');
 
 DROP TABLE IF EXISTS ocr_results;
 DROP TABLE IF EXISTS images;

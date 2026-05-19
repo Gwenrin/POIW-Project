@@ -1,4 +1,4 @@
-package com.poiw.ocr.service;
+package com.poiw.ocr.util;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;

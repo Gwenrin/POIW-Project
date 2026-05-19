@@ -1,6 +1,9 @@
 package com.poiw.ocr.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -14,6 +17,7 @@ public class ImageEntity
     @Column(name = "hash_sha256", nullable = false, unique = true, length = 64)
     private String hashSha256;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadata;
 
