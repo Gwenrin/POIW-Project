@@ -13,7 +13,7 @@
         
         /* Główna część strony */
         body { margin: 0; font-family: var(--font-family-sans-serif); background-color: var(--color-background); }
-        .content { min-height: 150vh; padding: 1.5rem; text-align: center; color: #fff; padding-top: calc(var(--navbar-height) + 2rem); }
+        .content { min-height: 15vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1.5rem; text-align: center; color: #fff; padding-top: calc(var(--navbar-height) + 2rem); }
         
         /* Misc */
         ul { list-style: none; margin: 0; padding: 0; }
@@ -68,4 +68,73 @@
             text-wrap: wrap;
             color: #fff; 
             padding-top: calc(var(--navbar-height));
-         }
+            margin-left:600px;
+        }
+        /*style dla formularzy*/
+        form {
+             width: 352px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px; 
+        }
+
+        form div {
+            display: flex;
+            align-items: center;
+            gap: 12px; 
+        }
+
+        label {
+            width: 90px; 
+        }
+
+        input {
+            width: 250px; 
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-left: 102px; 
+            padding: 8px 16px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center; 
+            gap: 8px;    
+            margin-left: 100px;        
+        }
+
+        .checkbox-row label {
+            width: auto;         
+        }
+
+        .checkbox-row input {
+            width: auto;         
+        }
+
+        .form-link {
+            width: 352px;
+            margin-top: 20px;
+            margin-right: 110px;
+        }
+
+        .form-link a {
+            margin-left: 102px;
+            color: rgb(0, 110, 255);
+        }
+
+        .button-signup {
+            display: flex;
+            align-items: center; 
+            gap: 8px;          
+        }
+        
+        .disclaimer {
+            width: 600px;
+        }
+
+        .disclaimer a {
+            color: rgb(0, 110, 255);
+        }
