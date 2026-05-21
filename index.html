@@ -36,7 +36,50 @@
     </header>
 
     <div class="mobile-menu-pane" id="mobile-menu-pane"></div>
-    <main class="content"><h1>WIP</h1></main>
+    <main class="content"><h1>
+        <section class="ocr-panel">
+        <h1>OCR Image Scanner</h1>
+        <p class="page-description">
+            Upload an image and run OCR analysis. This version uses a simulated OCR response.
+        </p>
+
+        <form id="ocr-form" class="ocr-form">
+            <div class="form-group">
+                <label for="image-input">Choose image:</label>
+                <input 
+                    type="file" 
+                    id="image-input" 
+                    name="image" 
+                    accept="image/png, image/jpeg, image/jpg"
+                    required
+                >
+            </div>
+
+            <div class="preview-box" id="preview-box">
+                <p>No image selected</p>
+            </div>
+
+            <button type="submit" class="primary-button">
+                Run OCR
+            </button>
+        </form>
+
+        <section class="status-box" id="status-box">
+            Status: waiting for file
+        </section>
+
+        <section class="result-box">
+            <h2>OCR Result</h2>
+            <textarea id="ocr-result" readonly placeholder="OCR result will appear here..."></textarea>
+        </section>
+
+        <section class="metadata-box">
+            <h2>File information</h2>
+            <ul id="file-info">
+                <li>No file loaded</li>
+            </ul>
+        </section>
+    </section></h1></main>
     
 <script> //wstępny skrypt do obsługi na urządzeniach mobilnych
     document.addEventListener('DOMContentLoaded', () => {
@@ -53,6 +96,162 @@
             });
         }
     });
+  
+
+    const ocrForm = document.getElementById('ocr-form');
+    const imageInput = document.getElementById('image-input');
+    const previewBox = document.getElementById('preview-box');
+    const statusBox = document.getElementById('status-box');
+    const ocrResult = document.getElementById('ocr-result');
+    const fileInfo = document.getElementById('file-info');
+
+    let selectedFile = null;
+
+    imageInput.addEventListener('change', () => {
+        selectedFile = imageInput.files[0];
+
+        if (!selectedFile) {
+            resetPreview();
+            return;
+        }
+
+        const validationError = validateImageFile(selectedFile);
+
+        if (validationError) {
+            setStatus(validationError, 'error');
+            resetPreview();
+            imageInput.value = '';
+            selectedFile = null;
+            return;
+        }
+
+        showImagePreview(selectedFile);
+        showFileInfo(selectedFile);
+        setStatus('File loaded correctly. Ready to run OCR.', 'success');
+    });
+
+    ocrForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!selectedFile) {
+            setStatus('Please select an image first.', 'error');
+            return;
+        }
+
+        setStatus('Processing image...', 'processing');
+        ocrResult.value = '';
+
+        try {
+            const result = await simulateOcrRequest(selectedFile);
+
+            ocrResult.value = result.text;
+
+            saveResultToHistory({
+                fileName: selectedFile.name,
+                fileSize: selectedFile.size,
+                fileType: selectedFile.type,
+                resultText: result.text,
+                createdAt: new Date().toISOString()
+            });
+
+            setStatus('OCR finished successfully.', 'success');
+        } catch (error) {
+            setStatus('OCR failed: ' + error.message, 'error');
+        }
+    });
+
+    function validateImageFile(file) {
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+            return 'Invalid file type. Please choose PNG or JPG image.';
+        }
+
+        if (file.size > maxSizeInBytes) {
+            return 'File is too large. Maximum size is 5 MB.';
+        }
+
+        return null;
+    }
+
+    function showImagePreview(file) {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            previewBox.innerHTML = '';
+
+            const img = document.createElement('img');
+            img.src = reader.result;
+            img.alt = 'Selected image preview';
+
+            previewBox.appendChild(img);
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function showFileInfo(file) {
+        fileInfo.innerHTML = `
+            <li><strong>Name:</strong> ${file.name}</li>
+            <li><strong>Type:</strong> ${file.type}</li>
+            <li><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB</li>
+        `;
+    }
+
+    function resetPreview() {
+        previewBox.innerHTML = '<p>No image selected</p>';
+        fileInfo.innerHTML = '<li>No file loaded</li>';
+        ocrResult.value = '';
+        setStatus('Status: waiting for file', '');
+    }
+
+    function setStatus(message, type) {
+        statusBox.textContent = message;
+
+        statusBox.classList.remove('processing', 'success', 'error');
+
+        if (type) {
+            statusBox.classList.add(type);
+        }
+    }
+
+    function simulateOcrRequest(file) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                // Prosta symulacja błędu
+                if (file.name.toLowerCase().includes('error')) {
+                    reject(new Error('Simulated server error'));
+                    return;
+                }
+
+                resolve({
+                    text:
+`Simulated OCR result
+
+File: ${file.name}
+
+Detected text:
+Lorem ipsum dolor sit amet.
+This is a test result from simulated OCR engine.
+
+Confidence: 92%
+Engine: SimulatedOCR v1.0`
+                });
+            }, 1500);
+        });
+    }
+
+    function saveResultToHistory(result) {
+        const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
+
+        history.push(result);
+
+        localStorage.setItem('ocrHistory', JSON.stringify(history));
+    }
+
+
     </script>
 </body>
 </html>
