@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PARSER_H
+#define PARSER_H
 
 #include <vector>
 #include <string>
@@ -18,3 +19,5 @@ vector<Sample> LoadDataset(const string& folderPath);
 // Parse an image into a sequence of samples in reading order
 // Label 26 = space, label 27 = character (identity determined by net)
 vector<Sample> ParseImage(const string& filePath);
+
+#endif // PARSER_H

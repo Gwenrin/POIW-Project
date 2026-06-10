@@ -11,26 +11,22 @@ using namespace std;
 string NetRun() {
     Network net("net_weights.txt");
     ForwardPassData fwdData;
-    string fullResult = "";
+    string result;
 
     auto samples = ParseImage("temp.png");
-    if (samples.empty()) {
-        cout << "(no characters detected)" << endl;
-        return "";
-    }
+    if (samples.empty()) return result;
 
     for (auto& sample : samples) {
         if (sample.Label == 26) {
-            cout << ' ';
+            result += ' ';
             continue;
         }
         ForwardPass(sample.Image, net, fwdData);
-        size_t result = Argmax(fwdData.Probabilities);
-        if (result < 26) {
-            fullResult = (char)('A' + result);
-        } else fullResult += ' ';
+        size_t pred = Argmax(fwdData.Probabilities);
+        if (pred < 26)
+            result += (char)('A' + pred);
     }
-    return fullResult;
+    return result;
 }
 
 void NetTrain() {
@@ -61,17 +57,13 @@ void NetTrain() {
 
         float totalLoss = 0.0f;
         int correct = 0;
-        char expected, got;
 
         for (auto& sample : dataset) {
-            got = ForwardPass(sample.Image, net, fwdData);
+            ForwardPass(sample.Image, net, fwdData);
             totalLoss += Loss(fwdData.Probabilities, sample.Label);
             if (Argmax(fwdData.Probabilities) == sample.Label) correct++;
             Backprop(net, fwdData, sample.Label);
-            expected = (sample.Label < 26) ? ('A' + sample.Label) : '_';
         }
-
-        cout << "Expected: " << expected << "  Got: " << got << endl;
 
         cout << "Epoch " << epoch + 1 << "/" << EPOCHS
              << "  Loss: " << totalLoss / dataset.size()

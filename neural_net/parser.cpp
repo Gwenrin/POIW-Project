@@ -276,16 +276,6 @@ vector<Sample> LoadDataset(const string& folderPath) {
             unsigned char* data = stbi_load(path.c_str(), &w, &h, &channels, 0);
             if (!data) { cerr << "Warning: couldn't load " << name << "\n"; continue; }
 
-            if (w <= 28 && h <= 28) {
-                auto gray = ToGrayscale(data, w, h, channels);
-                stbi_image_free(data);
-                int thresh = OtsuThreshold(gray);
-                auto bin = Binarize(gray, thresh);
-                // pad to 28x28
-                dataset.push_back({ResizeAndPad(bin, 0, 0, w, h), label});
-                continue;
-            }
-
             auto gray = ToGrayscale(data, w, h, channels);
             stbi_image_free(data);
             int thresh = OtsuThreshold(gray);

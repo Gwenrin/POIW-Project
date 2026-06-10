@@ -2,7 +2,7 @@
 
 #include <string>
 
-#define TRAIN
+//#define TRAIN
 #define LOAD
 //#define FULL_EPOCH
 #define SAVE
