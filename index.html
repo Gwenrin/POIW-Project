@@ -4,254 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <script src="mobile-menu.js" defer></script>
+    <script src="ocr.js" defer></script>
     <title>POIW-Project</title>
 </head>
 <body>
     <header class="navbar">
         <div class="navbar__container">
             <a href="index.html" class="navbar__main">OCR</a>
-            <nav class="navbar__nav" id="main-nav">
+            <nav class="navbar__nav" id="main-nav" aria-label="Main navigation">
                 <ul class="nav-list">
-                    <li><a href="index.html" class="nav-link">
-                        Home
-                    </a></li>
-                    <li><a href="history.html" class="nav-link">
-                        Previous files
-                    </a></li>
-                    <li><a href="about.html" class="nav-link">
-                        About the project
-                    </a></li>
-                    <li><a href="license.html" class="nav-link">
-                        License
-                    </a></li>
-                    <li><a href="login.html" class="nav-link">
-                        Log in
-                    </a></li>
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="history.html" class="nav-link">Previous files</a></li>
+                    <li><a href="about.html" class="nav-link">About the project</a></li>
+                    <li><a href="license.html" class="nav-link">License</a></li>
+                    <li><a href="login.html" class="nav-link">Log in</a></li>
                 </ul>
             </nav>
-            <button class="navbar__mobile-toggle" id="mobile-toggle" aria-label="Open Menu">
-                <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
+            <button class="navbar__mobile-toggle" id="mobile-toggle" type="button" aria-label="Open Menu" aria-controls="mobile-menu-pane" aria-expanded="false">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
             </button>
         </div>
     </header>
 
-    <div class="mobile-menu-pane" id="mobile-menu-pane"></div>
-    <main class="content"><h1>
+    <nav class="mobile-menu-pane" id="mobile-menu-pane" aria-label="Mobile navigation" aria-hidden="true"></nav>
+
+    <main class="page-main">
         <section class="ocr-panel">
-        <h1>OCR Image Scanner</h1>
-        <p class="page-description">
-            Upload an image and run OCR analysis. This version uses a simulated OCR response.
-        </p>
+            <header class="ocr-panel__header">
+                <h1>OCR Image Scanner</h1>
+                <p class="page-description">
+                    Upload an image and run OCR analysis. This version uses a simulated OCR response.
+                </p>
+            </header>
 
-        <form id="ocr-form" class="ocr-form">
-            <div class="form-group">
-                <label for="image-input">Choose image:</label>
-                <input 
-                    type="file" 
-                    id="image-input" 
-                    name="image" 
-                    accept="image/png, image/jpeg, image/jpg"
-                    required
-                >
-            </div>
+            <form id="ocr-form" class="ocr-form">
+                <div class="ocr-form__field">
+                    <label for="image-input">Choose image:</label>
+                    <input
+                        type="file"
+                        id="image-input"
+                        name="image"
+                        accept="image/png, image/jpeg, image/jpg"
+                        required
+                    >
+                </div>
 
-            <div class="preview-box" id="preview-box">
-                <p>No image selected</p>
-            </div>
+                <div class="preview-box" id="preview-box" aria-live="polite">
+                    <p>No image selected</p>
+                </div>
 
-            <button type="submit" class="primary-button">
-                Run OCR
-            </button>
-        </form>
+                <button type="submit" class="primary-button">
+                    Run OCR
+                </button>
+            </form>
 
-        <section class="status-box" id="status-box">
-            Status: waiting for file
+            <section class="status-box" id="status-box" aria-live="polite">
+                Status: waiting for file
+            </section>
+
+            <section class="result-box">
+                <h2>OCR Result</h2>
+                <textarea id="ocr-result" readonly placeholder="OCR result will appear here..."></textarea>
+            </section>
+
+            <section class="metadata-box">
+                <h2>File information</h2>
+                <ul id="file-info">
+                    <li>No file loaded</li>
+                </ul>
+            </section>
         </section>
-
-        <section class="result-box">
-            <h2>OCR Result</h2>
-            <textarea id="ocr-result" readonly placeholder="OCR result will appear here..."></textarea>
-        </section>
-
-        <section class="metadata-box">
-            <h2>File information</h2>
-            <ul id="file-info">
-                <li>No file loaded</li>
-            </ul>
-        </section>
-    </section></h1></main>
-    
-<script> //wstępny skrypt do obsługi na urządzeniach mobilnych
-    document.addEventListener('DOMContentLoaded', () => {
-        const mobileToggle = document.getElementById('mobile-toggle');
-        const mobileMenuPane = document.getElementById('mobile-menu-pane');
-        const mainNav = document.getElementById('main-nav');
-        if(mainNav) {
-            mobileMenuPane.innerHTML = mainNav.innerHTML;
-        }
-        if(mobileToggle) {
-            mobileToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                mobileMenuPane.classList.toggle('is-open');
-            });
-        }
-    });
-  
-
-    const ocrForm = document.getElementById('ocr-form');
-    const imageInput = document.getElementById('image-input');
-    const previewBox = document.getElementById('preview-box');
-    const statusBox = document.getElementById('status-box');
-    const ocrResult = document.getElementById('ocr-result');
-    const fileInfo = document.getElementById('file-info');
-
-    let selectedFile = null;
-
-    imageInput.addEventListener('change', () => {
-        selectedFile = imageInput.files[0];
-
-        if (!selectedFile) {
-            resetPreview();
-            return;
-        }
-
-        const validationError = validateImageFile(selectedFile);
-
-        if (validationError) {
-            setStatus(validationError, 'error');
-            resetPreview();
-            imageInput.value = '';
-            selectedFile = null;
-            return;
-        }
-
-        showImagePreview(selectedFile);
-        showFileInfo(selectedFile);
-        setStatus('File loaded correctly. Ready to run OCR.', 'success');
-    });
-
-    ocrForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        if (!selectedFile) {
-            setStatus('Please select an image first.', 'error');
-            return;
-        }
-
-        setStatus('Processing image...', 'processing');
-        ocrResult.value = '';
-
-        try {
-            const result = await simulateOcrRequest(selectedFile);
-
-            ocrResult.value = result.text;
-
-            saveResultToHistory({
-                fileName: selectedFile.name,
-                fileSize: selectedFile.size,
-                fileType: selectedFile.type,
-                resultText: result.text,
-                createdAt: new Date().toISOString()
-            });
-
-            setStatus('OCR finished successfully.', 'success');
-        } catch (error) {
-            setStatus('OCR failed: ' + error.message, 'error');
-        }
-    });
-
-    function validateImageFile(file) {
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-        const maxSizeInMB = 5;
-        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-
-        if (!allowedTypes.includes(file.type)) {
-            return 'Invalid file type. Please choose PNG or JPG image.';
-        }
-
-        if (file.size > maxSizeInBytes) {
-            return 'File is too large. Maximum size is 5 MB.';
-        }
-
-        return null;
-    }
-
-    function showImagePreview(file) {
-        const reader = new FileReader();
-
-        reader.onload = () => {
-            previewBox.innerHTML = '';
-
-            const img = document.createElement('img');
-            img.src = reader.result;
-            img.alt = 'Selected image preview';
-
-            previewBox.appendChild(img);
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    function showFileInfo(file) {
-        fileInfo.innerHTML = `
-            <li><strong>Name:</strong> ${file.name}</li>
-            <li><strong>Type:</strong> ${file.type}</li>
-            <li><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB</li>
-        `;
-    }
-
-    function resetPreview() {
-        previewBox.innerHTML = '<p>No image selected</p>';
-        fileInfo.innerHTML = '<li>No file loaded</li>';
-        ocrResult.value = '';
-        setStatus('Status: waiting for file', '');
-    }
-
-    function setStatus(message, type) {
-        statusBox.textContent = message;
-
-        statusBox.classList.remove('processing', 'success', 'error');
-
-        if (type) {
-            statusBox.classList.add(type);
-        }
-    }
-
-    function simulateOcrRequest(file) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                // Prosta symulacja błędu
-                if (file.name.toLowerCase().includes('error')) {
-                    reject(new Error('Simulated server error'));
-                    return;
-                }
-
-                resolve({
-                    text:
-`Simulated OCR result
-
-File: ${file.name}
-
-Detected text:
-Lorem ipsum dolor sit amet.
-This is a test result from simulated OCR engine.
-
-Confidence: 92%
-Engine: SimulatedOCR v1.0`
-                });
-            }, 1500);
-        });
-    }
-
-    function saveResultToHistory(result) {
-        const history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
-
-        history.push(result);
-
-        localStorage.setItem('ocrHistory', JSON.stringify(history));
-    }
-
-
-    </script>
+    </main>
 </body>
 </html>
