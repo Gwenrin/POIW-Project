@@ -2,6 +2,8 @@
 #include "stb_image.h"
 
 #include "parser.h"
+#include "labels.h"
+#include "parser_label.h"
 #include <stdexcept>
 #include <algorithm>
 #include <filesystem>
@@ -263,13 +265,14 @@ vector<Sample> LoadDataset(const string& folderPath) {
         string path = entry.path().string();
         string name = entry.path().filename().string();
 
-        if (name.size() < 2 || !isalpha(name[0])) continue;
         string ext = entry.path().extension().string();
         if (ext != ".png" && ext != ".PNG") continue;
 
-        char letter = toupper(name[0]);
-        if (letter < 'A' || letter > 'Z') continue;
-        size_t label = letter - 'A';
+        size_t label = PrefixToLabel(name);
+        if (label == BLANK_LABEL) {
+            cerr << "Warning: unrecognised prefix in " << name << ", skipping\n";
+            continue;
+        }
 
         try {
             int w, h, channels;

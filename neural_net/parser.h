@@ -6,18 +6,20 @@
 
 using namespace std;
 
-// Label 0-25 = A-Z, 26 = blank/space, 27 = unknown (inference only)
+// Label 0-95 = characters per LABELS in labels.h
+// Label 96 = blank/space
+// Label 97 = unknown (inference only, identity determined by net)
 struct Sample {
     vector<vector<int>> Image;
     size_t Label;
 };
 
-// Load all labeled samples from a folder of PNGs named X_YYY.png
-// Positive samples labeled from filename, blanks get label 26
+// Load all labeled samples from a dataset folder
+// Filenames must match the prefix scheme in generate_dataset.py
 vector<Sample> LoadDataset(const string& folderPath);
 
-// Parse an image into a sequence of samples in reading order
-// Label 26 = space, label 27 = character (identity determined by net)
+// Parse an image into a reading-order sequence of samples
+// Label 96 = space, label 97 = character (net decides which)
 vector<Sample> ParseImage(const string& filePath);
 
 #endif // PARSER_H

@@ -1,43 +1,80 @@
 #include "interface.h"
 #include "parser.h"
-#include "net.h"
+#include "labels.h"
 
 #include <algorithm>
 #include <random>
 #include <ctime>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
+
+// Escape a UTF-8 string for JSON output
+static string JsonEscape(const string& s) {
+    string out;
+    for (unsigned char c : s) {
+        if      (c == '"')  out += "\\\"";
+        else if (c == '\\') out += "\\\\";
+        else if (c == '\n') out += "\\n";
+        else if (c == '\r') out += "\\r";
+        else if (c == '\t') out += "\\t";
+        else                out += c;
+    }
+    return out;
+}
 
 string NetRun() {
     Network net("net_weights.txt");
     ForwardPassData fwdData;
-    string result;
 
     auto samples = ParseImage("temp.png");
-    if (samples.empty()) return result;
+    if (samples.empty()) {
+        cout << "{\"result\":\"\",\"certainty\":0.0}" << endl;
+        return "";
+    }
+
+    string result;
+    float totalProb = 0.0f;
+    int charCount = 0;
 
     for (auto& sample : samples) {
-        if (sample.Label == 26) {
+        if (sample.Label == BLANK_LABEL) {
             result += ' ';
             continue;
         }
         ForwardPass(sample.Image, net, fwdData);
         size_t pred = Argmax(fwdData.Probabilities);
-        if (pred < 26)
-            result += (char)('A' + pred);
+        float prob  = fwdData.Probabilities[pred];
+
+        if (pred < BLANK_LABEL) {
+            result += LabelToString(pred);
+            totalProb += prob;
+            charCount++;
+        }
     }
+
+    float certainty = (charCount > 0) ? (totalProb / charCount) : 0.0f;
+
+    // Output JSON to stdout for the Java backend
+    ostringstream json;
+    json << fixed << setprecision(4);
+    json << "{\"result\":\"" << JsonEscape(result)
+         << "\",\"certainty\":" << certainty << "}";
+    cout << json.str() << endl;
+
     return result;
 }
 
 void NetTrain() {
     const string dataFolder  = "dataset";
     const string weightsFile = "net_weights.txt";
-    const int    EPOCHS      = 20;
+    const int    EPOCHS      = 5;
 
+    mt19937 rng(time(NULL));
     #ifdef LOAD
         Network net(weightsFile);
     #else
-        mt19937 rng(time(NULL));
         uniform_real_distribution<float> dist(-0.01f, 0.01f);
         Network net(rng, dist);
     #endif
@@ -49,7 +86,6 @@ void NetTrain() {
     }
     cout << "Loaded " << dataset.size() << " samples." << endl;
 
-    mt19937 rng(time(NULL));
     ForwardPassData fwdData;
 
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
@@ -58,22 +94,35 @@ void NetTrain() {
         float totalLoss = 0.0f;
         int correct = 0;
 
+        int sampleIdx = 0;
         for (auto& sample : dataset) {
             ForwardPass(sample.Image, net, fwdData);
             totalLoss += Loss(fwdData.Probabilities, sample.Label);
-            if (Argmax(fwdData.Probabilities) == sample.Label) correct++;
+
+            size_t pred = Argmax(fwdData.Probabilities);
+            if (pred == sample.Label) correct++;
+
+            if (++sampleIdx % 10000 == 0) cout << "  Sample " << sampleIdx << "/" << dataset.size() << endl;
+            #ifdef VERBOSE
+                string expected = (sample.Label < BLANK_LABEL) ? LabelToString(sample.Label) : "_";
+                string got      = (pred < BLANK_LABEL)         ? LabelToString(pred)         : "_";
+                cout << "Expected: " << expected << "  Got: " << got << endl;
+            #endif
+
             Backprop(net, fwdData, sample.Label);
         }
 
         cout << "Epoch " << epoch + 1 << "/" << EPOCHS
              << "  Loss: " << totalLoss / dataset.size()
              << "  Accuracy: " << (100.0f * correct / dataset.size()) << "%" << endl;
+
+        #ifdef SAVE
+            net.SaveToFile(weightsFile);
+            cout << "Weights saved to " << weightsFile << endl;
+        #endif
     }
 
-    #ifdef SAVE
-        net.SaveToFile(weightsFile);
-        cout << "Weights saved to " << weightsFile << endl;
-    #endif
+
 }
 
 void NetInterface() {

@@ -1,6 +1,7 @@
 #include "net.h"
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -117,12 +118,13 @@ vector<float> DenseLayer(const vector<float>& input, const vector<Neuron>& Dense
 
 vector<float> Softmax(const vector<float>& logits) {
     vector<float> result;
+    float maxVal = *max_element(logits.begin(), logits.end());
     float sum = 0;
     for (size_t i = 0; i < logits.size(); i++) {
-        sum += exp(logits[i]);
+        sum += exp(logits[i] - maxVal);
     }
     for (size_t i = 0; i < logits.size(); i++) {
-        result.push_back(exp(logits[i]) / sum);
+        result.push_back(exp(logits[i] - maxVal) / sum);
     }
     return result;
 }
@@ -293,7 +295,7 @@ vector<vector<vector<float>>> BackpropConv(const vector<vector<vector<float>>>& 
 }
 
 void Backprop(Network& net, ForwardPassData& fwdPass, const size_t& correctIndex) {
-    float learningRate = 0.001;
+    float learningRate = 0.0001;
 
     auto deltaDense2 = BackpropDense(LossGradient(fwdPass.Probabilities, correctIndex), fwdPass.Dense, net.DenseNeurons2, learningRate);
     auto deltaDense = BackpropDense(ReLUMask(deltaDense2, fwdPass.RawDense), fwdPass.Flattened, net.DenseNeurons, learningRate);
