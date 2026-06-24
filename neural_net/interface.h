@@ -7,7 +7,7 @@
 // #define TRAIN
 #define LOAD
 //#define FULL_EPOCH
-#define SAVE
+//#define SAVE
 //#define VERBOSE
 
 std::string NetRun(const std::string& imagePath, const std::string& weightsPath);

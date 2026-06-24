@@ -41,10 +41,15 @@ string NetRun(const string& imagePath, const string& weightsPath) {
     int charCount = 0;
 
     for (auto& sample : samples) {
-        if (sample.Image.empty() || sample.Label == PARSER_BLANK_LABEL || sample.Label == BLANK_LABEL) {
+        if (sample.Label == BLANK_LABEL || sample.Label == SPACE_LABEL) {
             result += ' ';
             continue;
         }
+        if (sample.Label == NEWLINE_LABEL) {
+            result += '\n';
+            continue;
+        }
+
         ForwardPass(sample.Image, net, fwdData);
         size_t pred = Argmax(fwdData.Probabilities);
         float prob  = fwdData.Probabilities[pred];
@@ -59,6 +64,8 @@ string NetRun(const string& imagePath, const string& weightsPath) {
     float certainty = (charCount > 0) ? (totalProb / charCount) : 0.0f;
 
     // Output JSON to stdout for the Java backend
+    while (!result.empty() && (result.back() == ' ' || result.back() == '\n')) //clears trailing spaces and newlines
+        result.pop_back();
     ostringstream json;
     json << fixed << setprecision(4);
     json << "{\"text\":\"" << JsonEscape(result)

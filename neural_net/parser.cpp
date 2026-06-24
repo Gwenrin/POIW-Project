@@ -135,37 +135,33 @@ static vector<vector<int>> ResizeAndPad(const vector<vector<int>>& bin, int x0, 
     return out;
 }
 
-// Slide a 28x28 window across a line band, stride 2px
-// Returns: vector of (image, isBlank) pairs
-// isBlank = true when the window is in a gap between characters
+// Extract one window per character run, plus blank markers for gaps
+// Returns: vector of (image, isBlank) pairs in reading order
 static vector<pair<vector<vector<int>>, bool>> SlideLine(
     const vector<vector<int>>& bin,
     int lineY0, int lineY1,
     const vector<pair<int,int>>& charRuns)
 {
     int lineH = lineY1 - lineY0;
-    int imgW   = bin[0].size();
-    const int STRIDE = 2;
-    const int WIN    = 28;
-
-    // Build a set of x-columns that belong to a character run
-    vector<bool> inChar(imgW, false);
-    for (auto& [cx0, cx1] : charRuns)
-        for (int x = cx0; x < cx1; x++)
-            inChar[x] = true;
+    int imgW  = bin[0].size();
+    // Minimum gap in columns to emit a space between characters
+    const int SPACE_GAP = lineH / 3;
 
     vector<pair<vector<vector<int>>, bool>> results;
 
-    for (int wx = 0; wx + WIN <= imgW; wx += STRIDE) {
-        // Count how many columns in this window overlap a character run
-        int overlap = 0;
-        for (int x = wx; x < wx + WIN; x++)
-            if (inChar[x]) overlap++;
+    int prevEnd = -1;
+    for (auto& [cx0, cx1] : charRuns) {
+        int runW = cx1 - cx0;
+        if (runW < 2) continue; // skip noise
 
-        bool blank = (overlap < WIN / 4); // less than 25% overlap = blank
+        // Emit a space if the gap since last character is large enough
+        if (prevEnd != -1 && cx0 - prevEnd > SPACE_GAP)
+            results.push_back({vector<vector<int>>(28, vector<int>(28, 0)), true}); // blank marker
 
-        auto patch = ResizeAndPad(bin, wx, lineY0, WIN, lineH);
-        results.push_back({patch, blank});
+        // Crop the character bounding box and resize to 28x28
+        auto patch = ResizeAndPad(bin, cx0, lineY0, runW, lineH);
+        results.push_back({patch, false});
+        prevEnd = cx1;
     }
 
     return results;
@@ -184,6 +180,7 @@ vector<Sample> ParseImage(const string& filePath) {
         auto gray  = ToGrayscale(data, w, h, channels);
         stbi_image_free(data);
         int thresh = OtsuThreshold(gray);
+        if (thresh < 50) thresh = 128;
         auto bin   = Binarize(gray, thresh);
         return {{ ResizeAndPad(bin, 0, 0, w, h), 27 }};
     }
@@ -192,6 +189,7 @@ vector<Sample> ParseImage(const string& filePath) {
     stbi_image_free(data);
 
     int thresh = OtsuThreshold(gray);
+    if (thresh < 50) thresh = 128;
     auto bin   = Binarize(gray, thresh);
 
     auto hProfile = HorizontalProfile(bin);
@@ -201,12 +199,14 @@ vector<Sample> ParseImage(const string& filePath) {
     bool lastWasBlank = true;
 
     for (auto& [ly0, ly1] : lineRuns) {
-        if (ly1 - ly0 < 6) continue;
+        int lineH = ly1 - ly0;
+        if (lineH < 6) {continue; }
 
         auto vProfile = VerticalProfile(bin, ly0, ly1);
-        auto charRuns = FindRuns(vProfile, 0, 2);
+        auto charRuns = FindRuns(vProfile, 0, 4);
 
         auto windows = SlideLine(bin, ly0, ly1, charRuns);
+
         for (auto& [img, isBlank] : windows) {
             if (isBlank) {
                 if (!lastWasBlank)
@@ -218,9 +218,9 @@ vector<Sample> ParseImage(const string& filePath) {
             }
         }
 
-        // Newline between text lines treated as a space
+        // Newline
         if (!lastWasBlank)
-            results.push_back({{}, 26});
+            results.push_back({vector<vector<int>>(28, vector<int>(28, 0)), 28}); // 28 = newline
         lastWasBlank = true;
     }
 

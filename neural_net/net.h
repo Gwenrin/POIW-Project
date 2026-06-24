@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include <fstream>
+#include <cmath>
 
 using namespace std;
 
@@ -35,18 +36,29 @@ struct Network {
     vector<Neuron> DenseNeurons2;
 
     Network(mt19937& rng, uniform_real_distribution<float>& dist) {
-        for (size_t i = 0; i < 32; i++) {
-            Filters.push_back(Neuron(9, rng, dist));
-        }
-        for (size_t i = 0; i < 32; i++) {
-            Filters2.push_back(Neuron(9 * 32, rng, dist));
-        }
-        for (size_t i = 0; i < 128; i++) {
-            DenseNeurons.push_back(Neuron(1152, rng, dist));
-        }
-        for (size_t i = 0; i < 27; i++) {
-            DenseNeurons2.push_back(Neuron(128, rng, dist));
-        }
+        // Conv layer 1: 9 inputs per filter
+        float he1 = sqrt(2.0f / 9);
+        uniform_real_distribution<float> d1(-he1, he1);
+        for (size_t i = 0; i < 32; i++)
+            Filters.push_back(Neuron(9, rng, d1));
+
+        // Conv layer 2: 9*32 = 288 inputs per filter
+        float he2 = sqrt(2.0f / 288);
+        uniform_real_distribution<float> d2(-he2, he2);
+        for (size_t i = 0; i < 32; i++)
+            Filters2.push_back(Neuron(9 * 32, rng, d2));
+
+        // Dense layer 1: 1152 inputs
+        float he3 = sqrt(2.0f / 1152);
+        uniform_real_distribution<float> d3(-he3, he3);
+        for (size_t i = 0; i < 128; i++)
+            DenseNeurons.push_back(Neuron(1152, rng, d3));
+
+        // Dense layer 2: 128 inputs
+        float he4 = sqrt(2.0f / 128);
+        uniform_real_distribution<float> d4(-he4, he4);
+        for (size_t i = 0; i < 97; i++)
+            DenseNeurons2.push_back(Neuron(128, rng, d4));
     }
 
     Network(const string& fileName) {
@@ -86,7 +98,7 @@ struct Network {
             weights.clear();
         }
 
-        for (size_t i = 0; i < 27; i++) {
+        for (size_t i = 0; i < 97; i++) {
             for (size_t j = 0; j < 128; j++) {
                 file >> value;
                 weights.push_back(value);
