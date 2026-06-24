@@ -4,10 +4,10 @@
 #include "net.h"
 #include <string>
 
-#define TRAIN
+//#define TRAIN
 #define LOAD
 //#define FULL_EPOCH
-#define SAVE
+//#define SAVE
 //#define VERBOSE
 
 std::string NetRun();

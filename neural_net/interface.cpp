@@ -30,7 +30,7 @@ string NetRun() {
 
     auto samples = ParseImage("temp.png");
     if (samples.empty()) {
-        cout << "{\"result\":\"\",\"certainty\":0.0}" << endl;
+        cout << "{\"result\":empty\"\",\"certainty\":0.0}" << endl;
         return "";
     }
 
@@ -39,10 +39,15 @@ string NetRun() {
     int charCount = 0;
 
     for (auto& sample : samples) {
-        if (sample.Label == BLANK_LABEL) {
+        if (sample.Label == BLANK_LABEL || sample.Label == SPACE_LABEL) {
             result += ' ';
             continue;
         }
+        if (sample.Label == NEWLINE_LABEL) {
+            result += '\n';
+            continue;
+        }
+
         ForwardPass(sample.Image, net, fwdData);
         size_t pred = Argmax(fwdData.Probabilities);
         float prob  = fwdData.Probabilities[pred];
@@ -57,6 +62,8 @@ string NetRun() {
     float certainty = (charCount > 0) ? (totalProb / charCount) : 0.0f;
 
     // Output JSON to stdout for the Java backend
+    while (!result.empty() && (result.back() == ' ' || result.back() == '\n')) //clears trailing spaces and newlines
+        result.pop_back();
     ostringstream json;
     json << fixed << setprecision(4);
     json << "{\"result\":\"" << JsonEscape(result)
