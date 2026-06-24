@@ -47,7 +47,7 @@ if (ocrForm && imageInput && previewBox && statusBox && ocrResult && fileInfo) {
     ocrResult.value = "";
 
     try {
-      const result = await simulateOcrRequest(selectedFile);
+      const result = await runOcrRequest(selectedFile);
 
       ocrResult.value = result.text;
 
@@ -183,4 +183,25 @@ function saveResultToHistory(result) {
   } catch (error) {
     console.error("[OCR] History could not be saved:", error);
   }
+}
+
+async function runOcrRequest(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("engine", "CUSTOM_NN");
+
+  const response = await fetch("/api/ocr/recognize", {
+    method: "POST",
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text() || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    text: data.text ?? ""
+  };
 }
