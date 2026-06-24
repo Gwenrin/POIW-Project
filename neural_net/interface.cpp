@@ -24,13 +24,13 @@ static string JsonEscape(const string& s) {
     return out;
 }
 
-string NetRun() {
-    Network net("net_weights.txt");
+string NetRun(const std::string& imagePath, const std::string& weightsPath) {
+    Network net(weightsPath);
     ForwardPassData fwdData;
 
-    auto samples = ParseImage("temp.png");
+    auto samples = ParseImage(imagePath);
     if (samples.empty()) {
-        cout << "{\"result\":empty\"\",\"certainty\":0.0}" << endl;
+        cout << "{\"text\":empty\"\",\"confidence\":0.0}" << endl;
         return "";
     }
 
@@ -66,8 +66,8 @@ string NetRun() {
         result.pop_back();
     ostringstream json;
     json << fixed << setprecision(4);
-    json << "{\"result\":\"" << JsonEscape(result)
-         << "\",\"certainty\":" << certainty << "}";
+    json << "{\"text\":\"" << JsonEscape(result)
+         << "\",\"confidence\":" << certainty << "}";
     cout << json.str() << endl;
 
     return result;
@@ -132,10 +132,10 @@ void NetTrain() {
 
 }
 
-void NetInterface() {
+void NetInterface(const std::string& imagePath, const std::string& weightsPath) {
     #ifdef TRAIN
         NetTrain();
     #else
-        NetRun();
+        NetRun(imagePath, weightsPath);
     #endif
 }
