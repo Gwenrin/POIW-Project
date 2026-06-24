@@ -4,11 +4,25 @@ const previewBox = document.getElementById("preview-box");
 const statusBox = document.getElementById("status-box");
 const ocrResult = document.getElementById("ocr-result");
 const fileInfo = document.getElementById("file-info");
+const engineButtons = document.querySelectorAll("[data-engine]");
 
 let selectedFile = null;
+let selectedEngine = "CUSTOM_NN";
 
 if (ocrForm && imageInput && previewBox && statusBox && ocrResult && fileInfo) {
   console.debug("[OCR] Interface initialized");
+
+  engineButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedEngine = button.dataset.engine;
+
+      engineButtons.forEach((engineButton) => {
+        const isActive = engineButton === button;
+        engineButton.classList.toggle("is-active", isActive);
+        engineButton.setAttribute("aria-pressed", String(isActive));
+      });
+    });
+  });
 
   imageInput.addEventListener("change", () => {
     selectedFile = imageInput.files[0] ?? null;
@@ -47,14 +61,16 @@ if (ocrForm && imageInput && previewBox && statusBox && ocrResult && fileInfo) {
     ocrResult.value = "";
 
     try {
-      const result = await runOcrRequest(selectedFile);
+      const result = await runOcrRequest(selectedFile, selectedEngine);
 
-      ocrResult.value = result.text;
+      ocrResult.value = formatOcrResult(result);
 
       saveResultToHistory({
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
         fileType: selectedFile.type,
+        engine: result.engineUsed,
+        confidence: result.confidence,
         resultText: result.text,
         createdAt: new Date().toISOString()
       });
@@ -185,10 +201,10 @@ function saveResultToHistory(result) {
   }
 }
 
-async function runOcrRequest(file) {
+async function runOcrRequest(file, engine) {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("engine", "CUSTOM_NN");
+  formData.append("engine", engine);
 
   const response = await fetch("/api/ocr/recognize", {
     method: "POST",
@@ -202,6 +218,22 @@ async function runOcrRequest(file) {
   const data = await response.json();
 
   return {
-    text: data.text ?? ""
+    text: data.text ?? "",
+    engineUsed: data.engineUsed ?? engine,
+    confidence: data.confidence ?? null
   };
+}
+
+function formatOcrResult(result) {
+  const details = [
+    result.text ?? "",
+    "",
+    `Engine: ${result.engineUsed ?? "unknown"}`
+  ];
+
+  if (result.confidence !== null && result.confidence !== undefined) {
+    details.push(`Confidence: ${result.confidence}`);
+  }
+
+  return details.join("\n");
 }

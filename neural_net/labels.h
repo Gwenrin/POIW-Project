@@ -27,7 +27,9 @@ static const std::vector<std::string> LABELS = {
     "&","*",  "+","=","<",">"
 };
 
-static const size_t BLANK_LABEL   = 96;
+static const size_t BLANK_LABEL   = 96; // unknown
+static const size_t SPACE_LABEL   = 26; // space (' ')
+static const size_t NEWLINE_LABEL = 28; // \n
 static const size_t NUM_CLASSES   = 97; // including blank
 static const size_t OUTPUT_NEURONS = 97;
 
