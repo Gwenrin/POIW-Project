@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="mobile-menu.js" defer></script>
+    <script src="ocr.js" defer></script>
+    <title>POIW-Project</title>
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar__container">
+            <a href="index.html" class="navbar__main">OCR</a>
+            <nav class="navbar__nav" id="main-nav" aria-label="Main navigation">
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="history.html" class="nav-link">Previous files</a></li>
+                    <li><a href="about.html" class="nav-link">About the project</a></li>
+                    <li><a href="license.html" class="nav-link">License</a></li>
+                    <li><a href="login.html" class="nav-link">Log in</a></li>
+                </ul>
+            </nav>
+            <button class="navbar__mobile-toggle" id="mobile-toggle" type="button" aria-label="Open Menu" aria-controls="mobile-menu-pane" aria-expanded="false">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-menu-pane" id="mobile-menu-pane" aria-label="Mobile navigation" aria-hidden="true"></nav>
+
+    <main class="page-main">
+        <section class="ocr-panel">
+            <header class="ocr-panel__header">
+                <h1>OCR Image Scanner</h1>
+                <p class="page-description">
+                    Upload an image and run OCR analysis. This version uses a simulated OCR response.
+                </p>
+            </header>
+
+            <form id="ocr-form" class="ocr-form">
+                <div class="ocr-form__field">
+                    <label for="image-input">Choose image:</label>
+                    <input
+                        type="file"
+                        id="image-input"
+                        name="image"
+                        accept="image/png, image/jpeg, image/jpg"
+                        required
+                    >
+                </div>
+
+                <div class="engine-selector" aria-label="OCR engine">
+                    <button
+                        type="button"
+                        class="engine-button is-active"
+                        data-engine="CUSTOM_NN"
+                        aria-pressed="true"
+                    >
+                        Custom NN
+                    </button>
+                    <button
+                        type="button"
+                        class="engine-button"
+                        data-engine="TESS4J"
+                        aria-pressed="false"
+                    >
+                        Tess4J
+                    </button>
+                </div>
+
+                <div class="preview-box" id="preview-box" aria-live="polite">
+                    <p>No image selected</p>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Run OCR
+                </button>
+            </form>
+
+            <section class="status-box" id="status-box" aria-live="polite">
+                Status: waiting for file
+            </section>
+
+            <section class="result-box">
+                <h2>OCR Result</h2>
+                <textarea id="ocr-result" readonly placeholder="OCR result will appear here..."></textarea>
+            </section>
+
+            <section class="metadata-box">
+                <h2>File information</h2>
+                <ul id="file-info">
+                    <li>No file loaded</li>
+                </ul>
+            </section>
+        </section>
+    </main>
+</body>
+</html>

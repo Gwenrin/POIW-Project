@@ -10,6 +10,8 @@
 
 using namespace std;
 
+static const size_t PARSER_BLANK_LABEL = 26;
+
 // Escape a UTF-8 string for JSON output
 static string JsonEscape(const string& s) {
     string out;
@@ -24,13 +26,13 @@ static string JsonEscape(const string& s) {
     return out;
 }
 
-string NetRun(const std::string& imagePath, const std::string& weightsPath) {
+string NetRun(const string& imagePath, const string& weightsPath) {
     Network net(weightsPath);
     ForwardPassData fwdData;
 
     auto samples = ParseImage(imagePath);
     if (samples.empty()) {
-        cout << "{\"text\":empty\"\",\"confidence\":0.0}" << endl;
+        cout << "{\"text\":\"\",\"confidence\":0.0}" << endl;
         return "";
     }
 
@@ -132,7 +134,7 @@ void NetTrain() {
 
 }
 
-void NetInterface(const std::string& imagePath, const std::string& weightsPath) {
+void NetInterface(const string& imagePath, const string& weightsPath) {
     #ifdef TRAIN
         NetTrain();
     #else
