@@ -384,6 +384,33 @@ h2 {
   cursor: pointer;
 }
 
+.engine-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.engine-button {
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  background: var(--surface-light);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.engine-button:hover {
+  border-color: var(--primary);
+}
+
+.engine-button.is-active {
+  border-color: var(--primary);
+  color: #001018;
+  background: var(--primary);
+}
+
 .preview-box {
   display: grid;
   min-height: 220px;
@@ -514,6 +541,10 @@ h2 {
 
   .form-actions {
     flex-direction: column;
+  }
+
+  .engine-selector {
+    grid-template-columns: 1fr;
   }
 
   .preview-box {

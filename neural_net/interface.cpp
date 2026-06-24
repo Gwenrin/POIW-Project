@@ -10,6 +10,8 @@
 
 using namespace std;
 
+static const size_t PARSER_BLANK_LABEL = 26;
+
 // Escape a UTF-8 string for JSON output
 static string JsonEscape(const string& s) {
     string out;
@@ -24,13 +26,13 @@ static string JsonEscape(const string& s) {
     return out;
 }
 
-string NetRun() {
-    Network net("net_weights.txt");
+string NetRun(const string& imagePath, const string& weightsPath) {
+    Network net(weightsPath);
     ForwardPassData fwdData;
 
-    auto samples = ParseImage("temp.png");
+    auto samples = ParseImage(imagePath);
     if (samples.empty()) {
-        cout << "{\"result\":\"\",\"certainty\":0.0}" << endl;
+        cout << "{\"text\":\"\",\"confidence\":0.0}" << endl;
         return "";
     }
 
@@ -39,7 +41,7 @@ string NetRun() {
     int charCount = 0;
 
     for (auto& sample : samples) {
-        if (sample.Label == BLANK_LABEL) {
+        if (sample.Image.empty() || sample.Label == PARSER_BLANK_LABEL || sample.Label == BLANK_LABEL) {
             result += ' ';
             continue;
         }
@@ -59,8 +61,8 @@ string NetRun() {
     // Output JSON to stdout for the Java backend
     ostringstream json;
     json << fixed << setprecision(4);
-    json << "{\"result\":\"" << JsonEscape(result)
-         << "\",\"certainty\":" << certainty << "}";
+    json << "{\"text\":\"" << JsonEscape(result)
+         << "\",\"confidence\":" << certainty << "}";
     cout << json.str() << endl;
 
     return result;
@@ -125,10 +127,10 @@ void NetTrain() {
 
 }
 
-void NetInterface() {
+void NetInterface(const string& imagePath, const string& weightsPath) {
     #ifdef TRAIN
         NetTrain();
     #else
-        NetRun();
+        NetRun(imagePath, weightsPath);
     #endif
 }

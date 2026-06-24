@@ -50,6 +50,25 @@
                     >
                 </div>
 
+                <div class="engine-selector" aria-label="OCR engine">
+                    <button
+                        type="button"
+                        class="engine-button is-active"
+                        data-engine="CUSTOM_NN"
+                        aria-pressed="true"
+                    >
+                        Custom NN
+                    </button>
+                    <button
+                        type="button"
+                        class="engine-button"
+                        data-engine="TESS4J"
+                        aria-pressed="false"
+                    >
+                        Tess4J
+                    </button>
+                </div>
+
                 <div class="preview-box" id="preview-box" aria-live="polite">
                     <p>No image selected</p>
                 </div>
