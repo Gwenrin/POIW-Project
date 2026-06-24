@@ -28,3 +28,7 @@ target
 .idea
 
 .env
+
+uploads/
+
+tessdata/

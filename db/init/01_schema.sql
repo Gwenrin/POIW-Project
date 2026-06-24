@@ -1,5 +1,5 @@
-DROP TYPE IF EXISTS ocr_engine;
-CREATE TYPE ocr_engine AS ENUM ('CUSTOM_NN', 'TESS4J');
+-- DROP TYPE IF EXISTS ocr_engine;
+-- CREATE TYPE ocr_engine AS ENUM ('CUSTOM_NN', 'TESS4J');
 
 DROP TABLE IF EXISTS ocr_results;
 DROP TABLE IF EXISTS images;
@@ -7,6 +7,10 @@ DROP TABLE IF EXISTS images;
 CREATE TABLE images (
                         id BIGSERIAL PRIMARY KEY,
                         hash_sha256 CHAR(64) NOT NULL UNIQUE,
+                        storage_path TEXT NOT NULL,
+                        original_filename TEXT,
+                        content_type VARCHAR(100),
+                        file_size BIGINT NOT NULL,
                         metadata JSONB,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -14,7 +18,7 @@ CREATE TABLE images (
 CREATE TABLE ocr_results (
                              id BIGSERIAL PRIMARY KEY,
                              image_id BIGINT NOT NULL REFERENCES images(id) ON DELETE CASCADE,
-                             engine ocr_engine NOT NULL,
+                             engine VARCHAR(32) NOT NULL CHECK (engine IN ('CUSTOM_NN', 'TESS4J')),
                              recognized_text TEXT NOT NULL,
                              processing_time_ms INTEGER,
                              processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

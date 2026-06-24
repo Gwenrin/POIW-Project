@@ -5,6 +5,7 @@ import com.poiw.ocr.entity.PredictionResultEntity;
 import com.poiw.ocr.model.OcrEngine;
 import com.poiw.ocr.model.OcrEngineType;
 import com.poiw.ocr.model.OcrResult;
+import com.poiw.ocr.model.StoredImageFile;
 import com.poiw.ocr.repository.ImageRepository;
 import com.poiw.ocr.repository.PredictionResultRepository;
 import com.poiw.ocr.util.Sha256Util;
@@ -38,20 +39,22 @@ public class OcrService
     private final Map<OcrEngineType, OcrEngine> engines;
     private final ImageRepository imageRepository;
     private final PredictionResultRepository predictionResultRepository;
+    private final ImageStorageService imageStorageService;
     private final ObjectMapper objectMapper;
-    private Sha256Util sha256Util;
 
     public OcrService(List<OcrEngine> engines,
                       ImageRepository imageRepository,
                       PredictionResultRepository predictionResultRepository,
+                      ImageStorageService imageStorageService,
                       ObjectMapper objectMapper)
     {
         this.engines = engines.stream()
                 .collect(Collectors.toMap(OcrEngine::getType, Function.identity(), (left, right) -> {
-                    throw new IllegalStateException("Duplicate OcrEngine been for type " + left.getType());
+                    throw new IllegalStateException("Duplicate OcrEngine bean for type " + left.getType());
                 }));
         this.imageRepository = imageRepository;
         this.predictionResultRepository = predictionResultRepository;
+        this.imageStorageService = imageStorageService;
         this.objectMapper = objectMapper;
 
         if (this.engines.isEmpty())
@@ -61,32 +64,33 @@ public class OcrService
     }
 
     @Transactional
-    public OcrResult recognize(MultipartFile file,  OcrEngineType ocrEngineType)
+    public OcrResult recognize(MultipartFile file, OcrEngineType ocrEngineType)
     {
         validateFile(file);
 
         final byte[] fileBytes = readBytes(file);
         final String hashSha256 = Sha256Util.calculate(fileBytes);
+        final StoredImageFile storedImageFile = imageStorageService.store(file, fileBytes, hashSha256);
+        final String metadataJson = buildMetadataJson(storedImageFile);
         final String engineDbValue = toDatabaseEngineValue(ocrEngineType);
-        final String metadataJson = buildMetadataJson(file, hashSha256);
         final OcrEngine ocrEngine = getRequiredEngine(ocrEngineType);
 
-        log.info("OCR request started: fileName={}, size={}, conentType={}, engine={}, sha256={}",
-                file.getOriginalFilename(),
-                file.getSize(),
-                file.getContentType(),
+        log.info("OCR request started: fileName={}, size={}, contentType={}, engine={}, sha256={}, path={}",
+                storedImageFile.originalFilename(),
+                storedImageFile.size(),
+                storedImageFile.contentType(),
                 ocrEngineType,
-                hashSha256);
+                hashSha256,
+                storedImageFile.path());
 
-        ImageEntity imageEntity = findOrCreateImage(hashSha256, metadataJson);
+        ImageEntity imageEntity = findOrCreateImage(storedImageFile, metadataJson);
 
-        Optional<PredictionResultEntity> cachedResult = predictionResultRepository.findByImageIdAndEngine(imageEntity.getId(), ocrEngineType);
+        Optional<PredictionResultEntity> cachedResult =
+                predictionResultRepository.findByImageIdAndEngine(imageEntity.getId(), ocrEngineType);
 
-        if(cachedResult.isPresent())
+        if (cachedResult.isPresent())
         {
-            log.info("OCR cache hit image: image={}, engine={}",
-                    imageEntity.getId(),
-                    engineDbValue);
+            log.info("OCR cache hit image: image={}, engine={}", imageEntity.getId(), engineDbValue);
             return toApiResult(cachedResult.get());
         }
 
@@ -95,21 +99,17 @@ public class OcrService
         OcrResult ocrResult;
         try
         {
-            ocrResult = ocrEngine.recognize(file);
-
-        }catch (RuntimeException e)
+            ocrResult = ocrEngine.recognize(storedImageFile);
+        }
+        catch (RuntimeException e)
         {
-            log.error("OCR engine failed: engine={}, sha256={}",
-                    ocrEngineType,
-                    hashSha256,
-                    e
-            );
+            log.error("OCR engine failed: engine={}, sha256={}", ocrEngineType, hashSha256, e);
             throw new IllegalStateException("OCR processing failed for engine: " + ocrEngineType, e);
         }
+
         final int processingTimeMs = nanosToMillisInt(System.nanoTime() - startedAtNanos);
 
         PredictionResultEntity predictionResultEntity = new PredictionResultEntity();
-
         predictionResultEntity.setImageId(imageEntity.getId());
         predictionResultEntity.setEngine(ocrEngineType);
         predictionResultEntity.setRecognizedText(safeText(ocrResult));
@@ -119,14 +119,17 @@ public class OcrService
         try
         {
             predictionResultRepository.saveAndFlush(predictionResultEntity);
-        }catch(DataIntegrityViolationException e)
+        }
+        catch (DataIntegrityViolationException e)
         {
-            PredictionResultEntity existingEntity = predictionResultRepository.findByImageIdAndEngine(imageEntity.getId(),
-                    ocrEngineType)
-                    .orElseThrow( () -> e);
-            log.warn("Race conditions during result save; returning existing row. image={}, engine={}",
+            PredictionResultEntity existingEntity = predictionResultRepository
+                    .findByImageIdAndEngine(imageEntity.getId(), ocrEngineType)
+                    .orElseThrow(() -> e);
+
+            log.warn("Race condition during result save; returning existing row. image={}, engine={}",
                     imageEntity.getId(),
                     engineDbValue);
+
             return toApiResult(existingEntity);
         }
 
@@ -135,23 +138,25 @@ public class OcrService
                 engineDbValue,
                 processingTimeMs);
 
-        return new OcrResult(predictionResultEntity.getRecognizedText(), firstNonBlank(ocrResult != null ? ocrResult.getEngineUsed() : null,
-                engineDbValue),
-                ocrResult != null ? ocrResult.getConfidence() : null);
+        return new OcrResult(
+                predictionResultEntity.getRecognizedText(),
+                firstNonBlank(ocrResult != null ? ocrResult.getEngineUsed() : null, engineDbValue),
+                ocrResult != null ? ocrResult.getConfidence() : null
+        );
     }
 
-    private String firstNonBlank(String preffered, String fallback)
+    private String firstNonBlank(String preferred, String fallback)
     {
-        if(preffered != null && !preffered.isBlank())
+        if (preferred != null && !preferred.isBlank())
         {
-            return preffered;
+            return preferred;
         }
         return fallback;
     }
 
     private String safeText(OcrResult ocrResult)
     {
-        if(ocrResult == null || ocrResult.getText() == null)
+        if (ocrResult == null || ocrResult.getText() == null)
         {
             return "";
         }
@@ -167,9 +172,9 @@ public class OcrService
     private OcrEngine getRequiredEngine(OcrEngineType ocrEngineType)
     {
         OcrEngine ocrEngine = engines.get(ocrEngineType);
-        if(ocrEngine == null)
+        if (ocrEngine == null)
         {
-            throw new IllegalArgumentException("OCR Engine is not available: " + ocrEngineType);
+            throw new IllegalArgumentException("OCR engine is not available: " + ocrEngineType);
         }
         return ocrEngine;
     }
@@ -179,21 +184,25 @@ public class OcrService
         return new OcrResult(entity.getRecognizedText(), entity.getEngine().name(), null);
     }
 
-    private ImageEntity findOrCreateImage(String hashSha256, String metadataJson)
+    private ImageEntity findOrCreateImage(StoredImageFile storedImageFile, String metadataJson)
     {
-        return imageRepository.findByHashSha256(hashSha256).orElseGet(()->{
+        return imageRepository.findByHashSha256(storedImageFile.hashSha256()).orElseGet(() -> {
             ImageEntity imageEntity = new ImageEntity();
-            imageEntity.setHashSha256(hashSha256);
+            imageEntity.setHashSha256(storedImageFile.hashSha256());
+            imageEntity.setStoragePath(storedImageFile.path().toString());
+            imageEntity.setOriginalFilename(storedImageFile.originalFilename());
+            imageEntity.setContentType(storedImageFile.contentType());
+            imageEntity.setFileSize(storedImageFile.size());
             imageEntity.setMetadata(metadataJson);
 
             try
             {
                 return imageRepository.saveAndFlush(imageEntity);
-            }catch (DataIntegrityViolationException e)
-            {
-                return imageRepository.findByHashSha256(hashSha256).orElseThrow(() -> e);
             }
-
+            catch (DataIntegrityViolationException e)
+            {
+                return imageRepository.findByHashSha256(storedImageFile.hashSha256()).orElseThrow(() -> e);
+            }
         });
     }
 
@@ -205,7 +214,7 @@ public class OcrService
         }
         catch (IOException e)
         {
-            throw new UncheckedIOException("Cannot read uploaded file bytes ", e);
+            throw new UncheckedIOException("Cannot read uploaded file bytes", e);
         }
     }
 
@@ -214,13 +223,14 @@ public class OcrService
         return ocrEngineType.name();
     }
 
-    private String buildMetadataJson(MultipartFile file, String hashSha256)
+    private String buildMetadataJson(StoredImageFile storedImageFile)
     {
         Map<String, Object> metadata = new LinkedHashMap<>();
-        metadata.put("originalFilename", file.getOriginalFilename());
-        metadata.put("contentType", file.getContentType());
-        metadata.put("size", file.getSize());
-        metadata.put("sha_256", hashSha256);
+        metadata.put("originalFilename", storedImageFile.originalFilename());
+        metadata.put("contentType", storedImageFile.contentType());
+        metadata.put("size", storedImageFile.size());
+        metadata.put("sha256", storedImageFile.hashSha256());
+        metadata.put("storagePath", storedImageFile.path().toString());
 
         try
         {
